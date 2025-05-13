@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Carta",
   description: "just keep writing",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +31,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <main className="min-h-screen flex flex-col bg-white dark:bg-black text-black dark:text-white font-mono">
+            {children}
+          </main>
+        </ThemeProvider>
       </body>
     </html>
   );
