@@ -7,6 +7,7 @@ import {
   IconMoon,
   IconHistory,
   IconDownload,
+  IconDownloadOff,
 } from "@tabler/icons-react";
 
 interface FooterProps {
@@ -95,12 +96,19 @@ export default function Footer({
           )}
         </button>
         <span>•</span>
-        <button
-          onClick={downloadAsPdf}
-          className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
-        >
-          <IconDownload size={20} strokeWidth={1.5} />
-        </button>
+        {wordCount ? (
+          <button
+            onClick={downloadAsPdf}
+            className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
+          >
+            <IconDownload size={20} strokeWidth={1.5} />
+          </button>
+        ) : (
+          <button className="pointer-none" disabled>
+            <IconDownloadOff size={20} strokeWidth={1.5} />
+          </button>
+        )}
+
         <span>•</span>
         <button
           onClick={toggleHistory}
