@@ -18,6 +18,8 @@ interface FooterProps {
   createNewDocument: () => void;
   downloadAsPdf: () => void;
   toggleHistory: () => void;
+  wordCount: number;
+  charCount: number;
 }
 
 export default function Footer({
@@ -29,6 +31,8 @@ export default function Footer({
   createNewDocument,
   downloadAsPdf,
   toggleHistory,
+  wordCount,
+  charCount,
 }: FooterProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -69,6 +73,10 @@ export default function Footer({
       </div>
 
       <div className="flex items-center gap-2">
+        <span>{wordCount} words</span>
+        <span>,</span>
+        <span>{charCount} chars</span>
+        <span>•</span>
         <button
           onClick={createNewDocument}
           className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
