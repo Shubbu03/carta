@@ -4,7 +4,7 @@ const MONGO_URI = process.env.MONGODB_URI!;
 
 if (!MONGO_URI) {
   throw new Error(
-    "Please define the MONGO_URI environment variable inside .env.local"
+    "Please define the MONGO_URI environment variable inside .env"
   );
 }
 
@@ -37,7 +37,6 @@ async function dbConnect(): Promise<Mongoose> {
     cached.promise = mongoose
       .connect(MONGO_URI!, opts)
       .then((mongooseInstance) => {
-        console.log("MongoDB Connected via Mongoose.");
         return mongooseInstance;
       })
       .catch((err) => {

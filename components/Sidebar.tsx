@@ -1,25 +1,13 @@
+import { ILetter } from "@/lib/models/Letter";
 import clsx from "clsx";
+import Link from "next/link";
 
 interface SidebarProps {
   show: boolean;
+  letters: ILetter[];
 }
 
-export default function Sidebar({ show }: SidebarProps) {
-  const pastLetters = [
-    "Document 1",
-    "Meeting Notes",
-    "Ideas",
-    "Journal Entry",
-    "To-Do List",
-    "Project Proposal",
-    "Draft Email",
-    "Research Notes",
-    "Quick Memos",
-    "Weekly Summary",
-    "Client Feedback",
-    "Vision Statement",
-  ];
-
+export default function Sidebar({ show, letters }: SidebarProps) {
   return (
     <div
       className={clsx(
@@ -30,11 +18,10 @@ export default function Sidebar({ show }: SidebarProps) {
     >
       <h3 className="font-bold text-lg mb-4 dark:text-white">Past letters</h3>
       <ul className="space-y-2">
-        {pastLetters.map((letter, index) => (
+        {letters.map((letter, index) => (
           <li
             key={index}
             className={clsx(
-              "p-2 rounded-lg cursor-pointer dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
               "opacity-0 translate-x-4",
               "transition-opacity duration-300 ease-in-out",
               {
@@ -43,7 +30,12 @@ export default function Sidebar({ show }: SidebarProps) {
             )}
             style={{ transitionDelay: `${index * 75}ms` }}
           >
-            {letter}
+            <Link
+              href={`/letter/${letter._id}`}
+              className="block p-2 rounded-lg cursor-pointer dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              {letter.title}
+            </Link>
           </li>
         ))}
       </ul>
