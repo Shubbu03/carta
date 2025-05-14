@@ -54,11 +54,26 @@ function EditorContent({
   );
   const [isSaving, setIsSaving] = useState(false);
   const [letters, setLetters] = useState<ILetter[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+
+    window.addEventListener("resize", checkMobile);
+
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
 
   useEffect(() => {
     if (initialLetterId) {
@@ -248,26 +263,6 @@ function EditorContent({
     setShowHistory((prevShow) => !prevShow);
   }, []);
 
-  const getRandomContentPlaceholder = () => {
-    return [
-      "Put pen to page",
-      "Let the ink flow",
-      "Weave words into being",
-      "Summon the silence into speech",
-      "Start spinning the tale",
-      "Whisper thoughts into form",
-      "Give voice to the void",
-      "Paint with words",
-      "Open the gates of expression",
-      "Set language into motion",
-      "Breathe life into letters",
-      "Unfurl the story",
-      "Kindle the first sentence",
-      "Let the muse speak",
-      "Strike the first spark of thought",
-    ][Math.floor(Math.random() * 15)];
-  };
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -305,8 +300,38 @@ function EditorContent({
     handleContentInput();
   }, [handleContentInput]);
 
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-950 items-center justify-center text-center p-6">
+        <div className="absolute top-0 left-0 p-6">
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+            carta.
+          </h1>
+        </div>
+        <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg p-8 max-w-md">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            Desktop Experience Recommended
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            This app is best experienced on a desktop/laptop device.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="absolute top-0 left-0 p-6 z-10">
+        <h1
+          className="relative inline-block text-xl font-bold text-gray-800 dark:text-gray-100 group cursor-pointer"
+          onClick={() => router.push("/")}
+        >
+          carta.
+          <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-current group-hover:w-full transition-all duration-300"></span>
+        </h1>
+      </div>
+
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar show={showHistory} letters={letters} />
         <div
@@ -345,7 +370,7 @@ function EditorContent({
                   className="absolute top-0 left-0 text-gray-400 dark:text-gray-600 pointer-events-none select-none"
                   style={{ fontSize, fontFamily }}
                 >
-                  {getRandomContentPlaceholder()}
+                  begin writing.
                 </div>
               )}
             </div>
