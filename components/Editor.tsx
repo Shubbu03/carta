@@ -11,11 +11,24 @@ import Footer from "./Footer";
 import Sidebar from "./Sidebar";
 import { jsPDF } from "jspdf";
 import clsx from "clsx";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  createLetterAPI,
+  updateLetterAPI,
+  getLetterByIdAPI,
+  getLettersForSidebarAPI,
+} from "@/lib/apiService";
+import { ILetter } from "@/lib/models/Letter";
 
 const FONT_SIZES = ["16px", "18px", "20px", "24px", "28px"];
 const FONT_FAMILIES = ["Lato", "Arial", "Serif", "Geist Mono", "Geist Sans"];
+const DEBOUNCE_DELAY = 5000;
 
-export default function Editor() {
+interface EditorProps {
+  initialLetterId?: string;
+}
+
+export default function Editor({ initialLetterId }: EditorProps = {}) {
   const [showContentPlaceholder, setShowContentPlaceholder] = useState(true);
   const [showTitlePlaceholder, setShowTitlePlaceholder] = useState(true);
   const [fontSize, setFontSize] = useState(FONT_SIZES[1]);
@@ -23,9 +36,103 @@ export default function Editor() {
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
+  const [currentLetterId, setCurrentLetterId] = useState<string | null>(
+    initialLetterId || null
+  );
+  const [isSaving, setIsSaving] = useState(false);
+  const [letters, setLetters] = useState<ILetter[]>([]);
 
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!initialLetterId) {
+      const urlLetterId = searchParams.get("id");
+      if (urlLetterId) {
+        setCurrentLetterId(urlLetterId);
+        loadLetterContent(urlLetterId);
+      }
+    }
+  }, [searchParams, initialLetterId]);
+
+  useEffect(() => {
+    if (initialLetterId) {
+      loadLetterContent(initialLetterId);
+    }
+  }, [initialLetterId]);
+
+  const loadLetterContent = async (letterId: string) => {
+    try {
+      const letterData = await getLetterByIdAPI(letterId);
+      if (letterData) {
+        if (titleRef.current) {
+          titleRef.current.textContent = letterData.title || "";
+          setShowTitlePlaceholder(!letterData.title);
+        }
+        if (contentRef.current) {
+          contentRef.current.textContent = letterData.content || "";
+          setShowContentPlaceholder(!letterData.content);
+          handleContentInput();
+        }
+      }
+    } catch (error) {
+      console.error("Error loading letter:", error);
+    }
+  };
+
+  const loadSidebarLetters = async () => {
+    try {
+      const lettersData = await getLettersForSidebarAPI();
+      setLetters(lettersData);
+    } catch (error) {
+      console.error("Error loading letters for sidebar:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (showHistory) {
+      loadSidebarLetters();
+    }
+  }, [showHistory]);
+
+  const saveContent = useCallback(async () => {
+    const title = titleRef.current?.textContent || "";
+    const content = contentRef.current?.textContent || "";
+
+    if (!title && !content) return;
+
+    setIsSaving(true);
+
+    try {
+      if (currentLetterId) {
+        await updateLetterAPI(currentLetterId, { title, content });
+      } else {
+        const newLetter = await createLetterAPI({ title, content });
+        setCurrentLetterId(newLetter.id);
+
+        if (!initialLetterId) {
+          router.push(`/letter/${newLetter.id}`, { scroll: false });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving letter:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [currentLetterId, router, initialLetterId]);
+
+  const debouncedSave = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      saveContent();
+    }, DEBOUNCE_DELAY);
+  }, [saveContent]);
 
   const handleContentInput = useCallback(() => {
     const contentNode = contentRef.current;
@@ -34,15 +141,17 @@ export default function Editor() {
       const text = contentNode.textContent || "";
       setCharCount(text.length);
       setWordCount(text.trim() === "" ? 0 : text.trim().split(/\s+/).length);
+      debouncedSave();
     }
-  }, []);
+  }, [debouncedSave]);
 
   const handleTitleInput = useCallback(() => {
     const titleNode = titleRef.current;
     if (titleNode) {
       setShowTitlePlaceholder(titleNode.textContent?.trim() === "");
+      debouncedSave();
     }
-  }, []);
+  }, [debouncedSave]);
 
   const toggleFontSize = useCallback(() => {
     const currentIndex = FONT_SIZES.indexOf(fontSize);
@@ -55,6 +164,11 @@ export default function Editor() {
   }, []);
 
   const createNewDocument = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    setCurrentLetterId(null);
     if (contentRef.current) {
       contentRef.current.textContent = "";
       setShowContentPlaceholder(true);
@@ -65,7 +179,9 @@ export default function Editor() {
       titleRef.current.textContent = "";
       setShowTitlePlaceholder(true);
     }
-  }, []);
+
+    router.push("/");
+  }, [router]);
 
   const downloadAsPdf = useCallback(() => {
     try {
@@ -131,6 +247,25 @@ export default function Editor() {
     setShowHistory((prevShow) => !prevShow);
   }, []);
 
+  const getRandomContentPlaceholder = () => {
+    return [
+      "Put pen to page",
+      "Let the ink flow",
+      "Weave words into being",
+      "Summon the silence into speech",
+      "Start spinning the tale",
+      "Whisper thoughts into form",
+      "Give voice to the void",
+      "Paint with words",
+      "Open the gates of expression",
+      "Set language into motion",
+      "Breathe life into letters",
+      "Unfurl the story",
+      "Kindle the first sentence",
+      "Let the muse speak",
+      "Strike the first spark of thought",
+    ][Math.floor(Math.random() * 15)];
+  };
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -140,12 +275,29 @@ export default function Editor() {
         event.preventDefault();
         toggleHistory();
       }
+
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        (event.key === "s" || event.key === "S")
+      ) {
+        event.preventDefault();
+        saveContent();
+      }
     };
+
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [toggleHistory]);
+  }, [toggleHistory, saveContent]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     handleContentInput();
@@ -154,8 +306,7 @@ export default function Editor() {
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-950">
       <div className="flex flex-1 overflow-hidden relative">
-        {" "}
-        <Sidebar show={showHistory} />
+        <Sidebar show={showHistory} letters={letters} />
         <div
           className={clsx(
             "flex-1 flex flex-col items-center overflow-y-auto transition-all duration-300 ease-in-out",
@@ -163,7 +314,6 @@ export default function Editor() {
           )}
         >
           <div className="w-full max-w-4xl px-4 sm:px-8 pt-12 sm:pt-16 pb-24">
-            {" "}
             <div className="relative mb-6">
               <div
                 ref={titleRef}
@@ -193,7 +343,7 @@ export default function Editor() {
                   className="absolute top-0 left-0 text-gray-400 dark:text-gray-600 pointer-events-none select-none"
                   style={{ fontSize, fontFamily }}
                 >
-                  Begin writing
+                  {getRandomContentPlaceholder()}
                 </div>
               )}
             </div>
@@ -213,6 +363,7 @@ export default function Editor() {
           toggleHistory={toggleHistory}
           wordCount={wordCount}
           charCount={charCount}
+          isSaving={isSaving}
         />
       </div>
     </div>
