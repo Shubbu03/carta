@@ -1,23 +1,28 @@
 import axios from "axios";
 
 function getOrCreateDeviceId() {
-  let deviceId = localStorage.getItem("carta-deviceId");
-  if (!deviceId) {
-    deviceId = `device_${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 15)}`;
-    localStorage.setItem("carta-deviceId", deviceId);
+  if (typeof window !== "undefined") {
+    let deviceId = localStorage.getItem("carta-deviceId");
+    if (!deviceId) {
+      deviceId = `device_${Date.now()}_${Math.random()
+        .toString(36)
+        .substring(2, 15)}`;
+      localStorage.setItem("carta-deviceId", deviceId);
+    }
+    return deviceId;
   }
-  return deviceId;
+  return "server-side-rendering";
 }
 
-const currentDeviceId = getOrCreateDeviceId();
+const getDeviceId = () => {
+  return getOrCreateDeviceId();
+};
 
 const apiClient = axios.create({
   baseURL: "/api",
   headers: {
     "Content-Type": "application/json",
-    "x-device-id": currentDeviceId,
+    "x-device-id": getDeviceId(),
   },
 });
 

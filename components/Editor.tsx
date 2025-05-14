@@ -6,6 +6,7 @@ import {
   SetStateAction,
   useEffect,
   useCallback,
+  Suspense,
 } from "react";
 import Footer from "./Footer";
 import Sidebar from "./Sidebar";
@@ -28,7 +29,19 @@ interface EditorProps {
   initialLetterId?: string;
 }
 
-export default function Editor({ initialLetterId }: EditorProps = {}) {
+function EditorWithSearchParams({ initialLetterId }: EditorProps) {
+  const searchParams = useSearchParams();
+  const urlLetterId = searchParams.get("id");
+  const effectiveLetterId = initialLetterId || urlLetterId || null;
+
+  return <EditorContent initialLetterId={effectiveLetterId} />;
+}
+
+function EditorContent({
+  initialLetterId,
+}: {
+  initialLetterId: string | null;
+}) {
   const [showContentPlaceholder, setShowContentPlaceholder] = useState(true);
   const [showTitlePlaceholder, setShowTitlePlaceholder] = useState(true);
   const [fontSize, setFontSize] = useState(FONT_SIZES[1]);
@@ -37,7 +50,7 @@ export default function Editor({ initialLetterId }: EditorProps = {}) {
   const [charCount, setCharCount] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
   const [currentLetterId, setCurrentLetterId] = useState<string | null>(
-    initialLetterId || null
+    initialLetterId
   );
   const [isSaving, setIsSaving] = useState(false);
   const [letters, setLetters] = useState<ILetter[]>([]);
@@ -46,20 +59,10 @@ export default function Editor({ initialLetterId }: EditorProps = {}) {
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (!initialLetterId) {
-      const urlLetterId = searchParams.get("id");
-      if (urlLetterId) {
-        setCurrentLetterId(urlLetterId);
-        loadLetterContent(urlLetterId);
-      }
-    }
-  }, [searchParams, initialLetterId]);
 
   useEffect(() => {
     if (initialLetterId) {
+      setCurrentLetterId(initialLetterId);
       loadLetterContent(initialLetterId);
     }
   }, [initialLetterId]);
@@ -113,16 +116,14 @@ export default function Editor({ initialLetterId }: EditorProps = {}) {
         const newLetter = await createLetterAPI({ title, content });
         setCurrentLetterId(newLetter.id);
 
-        if (!initialLetterId) {
-          router.push(`/letter/${newLetter.id}`, { scroll: false });
-        }
+        router.push(`/letter/${newLetter.id}`, { scroll: false });
       }
     } catch (error) {
       console.error("Error saving letter:", error);
     } finally {
       setIsSaving(false);
     }
-  }, [currentLetterId, router, initialLetterId]);
+  }, [currentLetterId, router]);
 
   const debouncedSave = useCallback(() => {
     if (debounceTimerRef.current) {
@@ -266,6 +267,7 @@ export default function Editor({ initialLetterId }: EditorProps = {}) {
       "Strike the first spark of thought",
     ][Math.floor(Math.random() * 15)];
   };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -367,5 +369,13 @@ export default function Editor({ initialLetterId }: EditorProps = {}) {
         />
       </div>
     </div>
+  );
+}
+
+export default function Editor({ initialLetterId }: EditorProps) {
+  return (
+    <Suspense fallback={<div className="p-4">Loading editor...</div>}>
+      <EditorWithSearchParams initialLetterId={initialLetterId} />
+    </Suspense>
   );
 }
