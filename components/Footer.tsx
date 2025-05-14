@@ -8,6 +8,8 @@ import {
   IconHistory,
   IconDownload,
   IconDownloadOff,
+  IconLoader2,
+  IconCircleCheck,
 } from "@tabler/icons-react";
 
 interface FooterProps {
@@ -21,6 +23,7 @@ interface FooterProps {
   toggleHistory: () => void;
   wordCount: number;
   charCount: number;
+  isSaving: boolean;
 }
 
 export default function Footer({
@@ -34,6 +37,7 @@ export default function Footer({
   toggleHistory,
   wordCount,
   charCount,
+  isSaving,
 }: FooterProps) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -47,7 +51,7 @@ export default function Footer({
   const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+    <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 select-none">
       <div className="flex items-center gap-2">
         <button
           onClick={toggleFontSize}
@@ -74,6 +78,23 @@ export default function Footer({
       </div>
 
       <div className="flex items-center gap-2">
+        <span className="flex items-center">
+          {isSaving ? (
+            <IconLoader2
+              size={20}
+              strokeWidth={1.5}
+              className="mr-1 animate-spin"
+            />
+          ) : (
+            <IconCircleCheck
+              size={20}
+              strokeWidth={1.5}
+              className="mr-1 text-gray-500 dark:text-gray-400"
+            />
+          )}
+          {isSaving ? "Saving..." : "Saved"}
+        </span>
+        <span>•</span>
         <span>{wordCount} words</span>
         <span>,</span>
         <span>{charCount} chars</span>
