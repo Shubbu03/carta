@@ -10,6 +10,7 @@ import {
   IconDownloadOff,
   IconLoader2,
   IconCircleCheck,
+  IconTrash,
 } from "@tabler/icons-react";
 
 interface FooterProps {
@@ -21,6 +22,7 @@ interface FooterProps {
   createNewDocument: () => void;
   downloadAsPdf: () => void;
   toggleHistory: () => void;
+  deleteLetter: () => void;
   wordCount: number;
   charCount: number;
   isSaving: boolean;
@@ -35,6 +37,7 @@ export default function Footer({
   createNewDocument,
   downloadAsPdf,
   toggleHistory,
+  deleteLetter,
   wordCount,
   charCount,
   isSaving,
@@ -78,6 +81,19 @@ export default function Footer({
       </div>
 
       <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            if (
+              window.confirm("Are you sure you want to delete this letter?")
+            ) {
+              deleteLetter();
+            }
+          }}
+          className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
+        >
+          <IconTrash size={20} strokeWidth={1.5} />
+        </button>
+        <span>•</span>
         <span className="flex items-center">
           {isSaving ? (
             <IconLoader2

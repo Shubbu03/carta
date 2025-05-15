@@ -92,3 +92,40 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  await dbConnect();
+  const deviceId = getDeviceId(request);
+  const letterId = (await params).id;
+
+  if (!deviceId) {
+    return NextResponse.json(
+      { message: "x-device-id header is required" },
+      { status: 400 }
+    );
+  }
+
+  if (!letterId || !mongoose.Types.ObjectId.isValid(letterId)) {
+    return NextResponse.json(
+      { message: "Valid letter ID is required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const letter = await Letter.deleteOne({ _id: letterId, deviceId });
+
+    if (!letter) {
+      return NextResponse.json(
+        { message: "Letter not found or access denied" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ data: letter.acknowledged }, { status: 200 });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { message: "Server error while fetching letter", error: error },
+      { status: 500 }
+    );
+  }
+}

@@ -18,6 +18,7 @@ import {
   updateLetterAPI,
   getLetterByIdAPI,
   getLettersForSidebarAPI,
+  deleteLetterByIdAPI,
 } from "@/lib/apiService";
 import { ILetter } from "@/lib/models/Letter";
 
@@ -114,6 +115,21 @@ function EditorContent({
       setIsLoadingSidebar(false);
     }
   }, []);
+
+  const deleteLetterById = async () => {
+    if (!initialLetterId) {
+      console.error("Cannot delete letter: initialLetterId is null");
+      return;
+    }
+    try {
+      const deleteData = await deleteLetterByIdAPI(initialLetterId);
+      if (deleteData.data == true) {
+        router.replace("/");
+      }
+    } catch (error) {
+      console.error("Error deleting letter:", error);
+    }
+  };
 
   useEffect(() => {
     if (showHistory) {
@@ -397,6 +413,7 @@ function EditorContent({
           createNewDocument={createNewDocument}
           downloadAsPdf={downloadAsPdf}
           toggleHistory={toggleHistory}
+          deleteLetter={deleteLetterById}
           wordCount={wordCount}
           charCount={charCount}
           isSaving={isSaving}

@@ -51,3 +51,8 @@ export const updateLetterAPI = async (
   const response = await apiClient.put(`/letters/${letterId}`, letterData);
   return response.data;
 };
+
+export const deleteLetterByIdAPI = async (letterId: string) => {
+  const response = await apiClient.delete(`/letters/${letterId}`);
+  return response.data;
+};
