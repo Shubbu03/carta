@@ -5,9 +5,10 @@ import Link from "next/link";
 interface SidebarProps {
   show: boolean;
   letters: ILetter[];
+  isLoading: boolean;
 }
 
-export default function Sidebar({ show, letters }: SidebarProps) {
+export default function Sidebar({ show, letters, isLoading }: SidebarProps) {
   return (
     <div
       className={clsx(
@@ -17,28 +18,35 @@ export default function Sidebar({ show, letters }: SidebarProps) {
       aria-hidden={!show}
     >
       <h3 className="font-bold text-lg mb-4 dark:text-white">Past letters</h3>
-      <ul className="space-y-2">
-        {letters.map((letter, index) => (
-          <li
-            key={index}
-            className={clsx(
-              "opacity-0 translate-x-4",
-              "transition-opacity duration-300 ease-in-out",
-              {
-                "opacity-100 translate-x-0": show,
-              }
-            )}
-            style={{ transitionDelay: `${index * 75}ms` }}
-          >
-            <Link
-              href={`/letter/${letter._id}`}
-              className="block p-2 rounded-lg cursor-pointer dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+      {isLoading ? (
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      ) : letters.length === 0 ? (
+        <p className="text-gray-500 dark:text-gray-400">No past letters</p>
+      ) : (
+        <ul className="space-y-2">
+          {letters.map((letter, index) => (
+            <li
+              key={index}
+              className={clsx(
+                "opacity-0 translate-x-4",
+                "transition-all duration-300 ease-in-out",
+                {
+                  "opacity-100 translate-x-0": show,
+                }
+              )}
+              style={{ transitionDelay: `${index * 75}ms` }}
             >
-              {letter.title}
-            </Link>
-          </li>
-        ))}
-      </ul>
+              <Link
+                href={`/letter/${letter._id}`}
+                className="block p-2 rounded-lg cursor-pointer text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 truncate"
+                title={letter.title || "Untitled Letter"}
+              >
+                {letter.title || "Untitled Letter"}{" "}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

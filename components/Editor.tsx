@@ -55,6 +55,7 @@ function EditorContent({
   const [isSaving, setIsSaving] = useState(false);
   const [letters, setLetters] = useState<ILetter[]>([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoadingSidebar, setIsLoadingSidebar] = useState(false);
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -101,20 +102,24 @@ function EditorContent({
     }
   };
 
-  const loadSidebarLetters = async () => {
+  const loadSidebarLetters = useCallback(async () => {
+    setIsLoadingSidebar(true);
     try {
       const lettersData = await getLettersForSidebarAPI();
       setLetters(lettersData);
     } catch (error) {
       console.error("Error loading letters for sidebar:", error);
+      setLetters([]);
+    } finally {
+      setIsLoadingSidebar(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (showHistory) {
       loadSidebarLetters();
     }
-  }, [showHistory]);
+  }, [loadSidebarLetters, showHistory]);
 
   const saveContent = useCallback(async () => {
     const title = titleRef.current?.textContent || "";
@@ -333,7 +338,11 @@ function EditorContent({
       </div>
 
       <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar show={showHistory} letters={letters} />
+        <Sidebar
+          show={showHistory}
+          letters={letters}
+          isLoading={isLoadingSidebar}
+        />
         <div
           className={clsx(
             "flex-1 flex flex-col items-center overflow-y-auto transition-all duration-300 ease-in-out",
