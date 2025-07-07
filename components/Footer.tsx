@@ -1,7 +1,6 @@
 "use client";
 
 import { SetStateAction, useEffect, useState } from "react";
-import { useTheme } from "next-themes";
 import {
   IconSun,
   IconMoon,
@@ -12,6 +11,8 @@ import {
   IconCircleCheck,
   IconTrash,
 } from "@tabler/icons-react";
+import { useRippleTransition } from "@/lib/useRippleTransition";
+import RippleOverlay from "./RippleOverlay";
 
 interface FooterProps {
   fontSize: string;
@@ -42,7 +43,7 @@ export default function Footer({
   charCount,
   isSaving,
 }: FooterProps) {
-  const { theme, setTheme } = useTheme();
+  const { rippleState, startRippleTransition, currentTheme } = useRippleTransition();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -51,7 +52,10 @@ export default function Footer({
 
   if (!mounted) return null;
 
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  const handleThemeToggle = (event: React.MouseEvent) => {
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    startRippleTransition(event, newTheme);
+  };
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-black p-2 flex justify-between items-center text-sm text-gray-500 dark:text-gray-400 select-none">
@@ -69,9 +73,8 @@ export default function Footer({
             <button
               key={font}
               onClick={() => toggleFontFamily(font)}
-              className={`hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer ${
-                fontFamily === font ? "text-blue-500" : ""
-              }`}
+              className={`hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer ${fontFamily === font ? "text-blue-500" : ""
+                }`}
             >
               {font}
             </button>
@@ -124,9 +127,9 @@ export default function Footer({
         <span>•</span>
         <button
           className="hover:text-gray-800 dark:hover:text-gray-200 cursor-pointer"
-          onClick={toggleTheme}
+          onClick={handleThemeToggle}
         >
-          {theme === "dark" ? (
+          {currentTheme === "dark" ? (
             <IconSun size={20} strokeWidth={1.5} />
           ) : (
             <IconMoon size={20} strokeWidth={1.5} />
@@ -154,6 +157,13 @@ export default function Footer({
           <IconHistory size={20} strokeWidth={1.5} />
         </button>
       </div>
+
+      <RippleOverlay
+        isVisible={rippleState.isAnimating}
+        centerX={rippleState.centerX}
+        centerY={rippleState.centerY}
+        targetTheme={rippleState.targetTheme}
+      />
     </div>
   );
 }
