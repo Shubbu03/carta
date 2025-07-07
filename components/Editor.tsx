@@ -61,6 +61,7 @@ function EditorContent({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -267,12 +268,11 @@ function EditorContent({
         yPosition += lineHeight;
       }
 
-      const filename = `${
-        title
-          .replace(/[^a-z0-9_-\s]/gi, "")
-          .replace(/\s+/g, "_")
-          .toLowerCase() || "document"
-      }.pdf`;
+      const filename = `${title
+        .replace(/[^a-z0-9_-\s]/gi, "")
+        .replace(/\s+/g, "_")
+        .toLowerCase() || "document"
+        }.pdf`;
       doc.save(filename);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -283,6 +283,26 @@ function EditorContent({
   const toggleHistory = useCallback(() => {
     setShowHistory((prevShow) => !prevShow);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        showHistory &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        setShowHistory(false);
+      }
+    };
+
+    if (showHistory) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showHistory]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -355,6 +375,7 @@ function EditorContent({
 
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar
+          ref={sidebarRef}
           show={showHistory}
           letters={letters}
           isLoading={isLoadingSidebar}
